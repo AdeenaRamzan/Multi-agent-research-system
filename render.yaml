@@ -1,9 +1,0 @@
-services:
-  - type: web
-    name: researchmind-app
-    env: python
-    buildCommand: "pip install --no-cache-dir -r requirements.txt && cd frontend && npm install && npm run build"
-    startCommand: "python app.py"
-    envVars:
-      - key: GROQ_API_KEY
-        sync: false
