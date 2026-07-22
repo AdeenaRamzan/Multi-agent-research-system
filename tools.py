@@ -55,10 +55,13 @@ def get_ddg_search_tool():
 def scrape_url(url: str) -> str:
     """Scrape and return clean text content from a given URL for deeper reading."""
     try:
-        resp = requests.get(url, timeout=8, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"})
+        if not url or not url.startswith("http"):
+            return "Invalid URL provided."
+        resp = requests.get(url, timeout=4, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
         soup = BeautifulSoup(resp.text, "html.parser")
         for tag in soup(["script", "style", "nav", "footer", "header", "aside"]):
             tag.decompose()
-        return soup.get_text(separator=" ", strip=True)[:3500]
+        text = soup.get_text(separator=" ", strip=True)[:3500]
+        return text if text else "No main content found on page."
     except Exception as e:
-        return f"Could not scrape URL: {str(e)}"
+        return f"Scrape timeout or error: {str(e)}"

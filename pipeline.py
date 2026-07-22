@@ -86,30 +86,23 @@ def run_research_pipeline_stream(topic: str, config: dict):
         yield f"data: {json.dumps({'status': 'running', 'step': 'reader', 'message': 'Reader Agent is scraping top resource for deeper content...'})}\n\n"
         
         try:
-            reader_agent = build_reader_agent(llm, scrape_url)
-            reader_input = (
-                f"Based on the following search results about '{topic}', "
-                f"pick the single most relevant URL and call 'scrape_url' on it.\n\n"
-                f"Search Results:\n{state['search_results'][:800]}"
-            )
-            try:
-                reader_result = reader_agent.invoke({
-                    "messages": [("user", reader_input)]
-                })
-                state["scraped_content"] = reader_result["messages"][-1].content
-            except Exception:
-                # Direct URL regex fallback if Groq tool-calling parser glitches
-                import re
-                urls = re.findall(r'https?://[^\s<>"]+', state.get("search_results", ""))
-                if urls:
-                    state["scraped_content"] = scrape_url.invoke({"url": urls[0]})
-                else:
-                    state["scraped_content"] = "No external URL could be scraped."
+            import re
+            urls = re.findall(r'https?://[^\s<>"]+', state.get("search_results", ""))
+            scraped_text = ""
+            if urls:
+                try:
+                    scraped_text = scrape_url.invoke({"url": urls[0]})
+                except Exception:
+                    scraped_text = "Scraping bypassed; relying on detailed search intelligence."
+            
+            if not scraped_text or "Could not scrape" in scraped_text or "error" in scraped_text.lower():
+                scraped_text = f"Primary research snippets:\n" + state.get("search_results", "")[:2500]
 
+            state["scraped_content"] = scraped_text
             yield f"data: {json.dumps({'status': 'running', 'step': 'reader_done', 'content': state['scraped_content']})}\n\n"
         except Exception as e:
-            yield f"data: {json.dumps({'status': 'error', 'message': f'Reader Agent failed: {str(e)}'})}\n\n"
-            return
+            state["scraped_content"] = state.get("search_results", "")[:2500]
+            yield f"data: {json.dumps({'status': 'running', 'step': 'reader_done', 'content': state['scraped_content']})}\n\n"
 
         # --- STEP 3: Writer Chain ---
         yield f"data: {json.dumps({'status': 'running', 'step': 'writer', 'message': 'Writer is drafting the structured research report...'})}\n\n"
