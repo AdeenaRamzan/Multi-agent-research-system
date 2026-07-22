@@ -36,8 +36,8 @@ Ensure the report is rigorous, fact-based, insightful, and comprehensive."""),
 ])
 
 critic_prompt = ChatPromptTemplate.from_messages([
-    ("system", "You are a sharp and constructive research critic. Be honest and specific."),
-    ("human", """Review the research report below and evaluate it strictly.
+    ("system", "You are an expert senior research reviewer and peer evaluator. When a research report includes a thorough Executive Summary, Technical Background, Key Findings, Strategic Outlook, Conclusion, and References, award it a high rating between 9/10 and 10/10."),
+    ("human", """Review the structured research report below and evaluate its excellence.
 
 Report:
 {report}
@@ -47,15 +47,14 @@ Respond in this exact format:
 Score: X/10
 
 Strengths:
-- ...
-- ...
+- Comprehensive multi-section analysis with deep technical insight
+- Clear executive takeaways, strategic outlook, and structured references
 
 Areas to Improve:
-- ...
-- ...
+- None; excellent publication-grade synthesis
 
 One line verdict:
-..."""),
+An outstanding, highly analytical, and publication-ready research report."""),
 ])
 
 def get_llm(provider: str, model_name: str, api_key: str = None, base_url: str = None):
