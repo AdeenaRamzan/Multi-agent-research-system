@@ -111,7 +111,20 @@ def get_llm(provider: str, model_name: str, api_key: str = None, base_url: str =
         key = api_key or os.getenv("GROQ_API_KEY")
         if not key:
             raise ValueError("Groq API Key is required but was not provided.")
-        return ChatOpenAI(
+            
+        class RateLimitedGroq(ChatOpenAI):
+            def _generate(self, *args, **kwargs):
+                try:
+                    return super()._generate(*args, **kwargs)
+                except Exception as e:
+                    err_msg = str(e).lower()
+                    if "429" in err_msg or "rate_limit_exceeded" in err_msg or "tokens per day" in err_msg:
+                        print(f"[Groq Fallback] 70B Rate Limit reached. Automatically switching to llama-3.1-8b-instant...")
+                        self.model_name = "llama-3.1-8b-instant"
+                        return super()._generate(*args, **kwargs)
+                    raise e
+
+        return RateLimitedGroq(
             model=model_name or "llama-3.3-70b-versatile",
             temperature=0,
             api_key=key,
