@@ -1,73 +1,96 @@
----
-title: ResearchMind
-emoji: 🔬
-colorFrom: red
-colorTo: purple
-sdk: gradio
-sdk_version: 4.19.2
-app_file: app.py
-pinned: false
----
+# ResearchMind 🔬  
+### *Autonomous Multi-Agent AI Research Network & Intelligence Pipeline*
 
-# ResearchMind 🔬
-### AI Multi-Agent Research Network & Pipeline
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-38bdf8?style=for-the-badge&logo=vercel&logoColor=white)](https://multi-agent-research-system-khaki.vercel.app)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.100%2B-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![React](https://img.shields.io/badge/React-19.0-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
+[![Groq](https://img.shields.io/badge/LLM-Groq%20Llama%203.3-f97316?style=for-the-badge&logo=openai&logoColor=white)](https://groq.com/)
+[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
-ResearchMind is a premium, multi-agent AI system that automates deep academic and web research. It deploys a network of specialized LangChain agents to search, scrape, write, and critique a structured report on any topic of your choice.
+**ResearchMind** is a state-of-the-art multi-agent AI research network designed to automate deep academic, market, and technical research. Operating as a sequential agentic pipeline powered by LangChain, FastAPI, and React, ResearchMind deploys specialized AI agents to gather web intelligence, scrape full-body articles, synthesize comprehensive reports, and perform objective peer-review evaluations.
 
-The system features a stunning, glassmorphic dark-themed React single-page application (SPA) backed by a FastAPI web server, offering real-time status and log streaming (via Server-Sent Events).
+🌐 **Live Public Demo:** [https://multi-agent-research-system-khaki.vercel.app](https://multi-agent-research-system-khaki.vercel.app)
 
 ---
 
-## 🚀 Key Features
+## 🌟 Key Features
 
-*   **Premium Glassmorphic UI:** Modern dashboard with layout transitions, progress pipelines, live terminal logs, and custom tab views.
-*   **Multi-Provider LLM Integration:** Choose between **OpenAI** (GPT models), **Google Gemini** (featuring a robust free tier), or **Ollama** (completely local and free).
-*   **Keyless/Free Alternative Mode:** Use the system entirely for free! Skip Tavily and use **DuckDuckGo Search** (no key required) alongside local Ollama or free Gemini keys.
-*   **Dynamic API Key Inputs:** Enter your API keys directly in the frontend during execution. Keys are kept safe: stored only in your browser's local storage and never persisted on the server.
-*   **SSE Real-Time Log Streaming:** Watch intermediate outputs from the Search Agent, Scraping Reader, Writer, and Critic stream live in a terminal panel.
-*   **Constructive Critic Reviews:** Get an objective feedback breakdown (Score out of 10, Strengths, Areas to Improve) alongside the final markdown report.
-*   **One-Click Copy & Download:** Instantly copy formatted markdown or download a `.md` research report file.
+* **🤖 Autonomous Multi-Agent Network:** Deploys a team of 4 specialized LangChain agents operating in tandem (Search Agent, Reader Agent, Writer Chain, and Critic Reviewer).
+* **⚡ Ultra-Fast Groq & Llama 3.3 Integration:** Leverages Groq's LPU acceleration with `llama-3.3-70b-versatile` for blazing fast, high-reasoning intelligence synthesis.
+* **🔍 Keyless Free Web Search:** Integrates **DuckDuckGo Search** (`ddgs`) alongside Tavily, enabling keyless research execution out-of-the-box.
+* **🎨 Next-Gen Obsidian Glassmorphic UI:** Built with React 19, featuring ambient neon mesh glow halos, real-time node state indicators, and responsive tab views.
+* **📡 Real-Time SSE Event Streaming:** Streams step-by-step progress, raw web sources, scraped contents, and intermediate logs live over Server-Sent Events (SSE).
+* **⭐ Objective Critic Scorecard:** Every report undergoes peer-review evaluation by the Critic Chain, yielding an overall score (e.g. `9.2/10`), strengths breakdown, and areas for improvement.
+* **🔒 Enterprise Security & Dual-Key System:** Zero hardcoded API keys in tracked code. Supports pre-configured server environment variables (`GROQ_API_KEY`) with client-side local storage fallback.
+* **📥 One-Click Export:** Instantly copy formatted markdown or download `.md` research report files.
 
 ---
 
-## 🛠️ Architecture
+## 🧠 System Architecture & Agent Flow
 
-The system uses a sequential agentic pipeline:
+The ResearchMind pipeline follows a deterministic multi-stage orchestration workflow:
 
 ```mermaid
 graph TD
-    A[User Prompt/Topic] --> B[Search Agent]
-    B -->|DuckDuckGo or Tavily| C[Reader Agent]
-    C -->|Scrapes Web Content| D[Writer Chain]
-    D -->|Synthesizes Draft Report| E[Critic Chain]
-    E -->|Scores & Criticizes| F[Interactive Report Display]
+    User([👤 User Research Prompt]) --> Init[⚙️ Pipeline Initialization]
     
-    style B fill:#ff8c32,stroke:#fff,stroke-width:2px,color:#000
-    style C fill:#8b5cf6,stroke:#fff,stroke-width:2px,color:#fff
-    style D fill:#3b82f6,stroke:#fff,stroke-width:2px,color:#fff
-    style E fill:#10b981,stroke:#fff,stroke-width:2px,color:#fff
-```
+    subgraph "Agentic Pipeline Sequence"
+        Init --> SearchAgent["🔍 Search Agent (LangChain + DuckDuckGo/Tavily)"]
+        SearchAgent -->|Executes Web Queries & Gathers Snippets| ReaderAgent["📖 Reader Agent (Web Scraper)"]
+        ReaderAgent -->|Scrapes Top Deep Resource HTML/Text| WriterChain["✍️ Writer Chain (LLM Synthesizer)"]
+        WriterChain -->|Drafts Structured Academic Report| CriticChain["⭐ Critic Chain (Peer Evaluator)"]
+        CriticChain -->|Calculates Scorecard & Feedback| Complete[🏁 Complete Pipeline State]
+    end
 
-1.  **Search Agent:** Evaluates the topic, drafts optimal query arguments, and executes web search (Tavily or DuckDuckGo).
-2.  **Reader Agent:** Examines search records, selects the single most promising resource, scrapes it, and parses clean text content.
-3.  **Writer Chain:** Synthesizes the search logs and scraped content into a professional, structured markdown document.
-4.  **Critic Chain:** Reviews the draft report and issues a scorecard and verdict.
+    Complete --> UI["🖥️ Glassmorphic Report Viewer (Interactive Tabs & Export)"]
+
+    style SearchAgent fill:#0284c7,stroke:#38bdf8,stroke-width:2px,color:#fff
+    style ReaderAgent fill:#7c3aed,stroke:#a855f7,stroke-width:2px,color:#fff
+    style WriterChain fill:#c2410c,stroke:#f97316,stroke-width:2px,color:#fff
+    style CriticChain fill:#047857,stroke:#10b981,stroke-width:2px,color:#fff
+    style UI fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#fff
+```
 
 ---
 
-## 💻 How to Run Locally
+## 🛠️ Supported LLM & Search Providers
+
+| Provider | Supported Models | Pricing Tier | Key Required? |
+| :--- | :--- | :--- | :--- |
+| **Groq (Default)** | `llama-3.3-70b-versatile`, `llama-3.1-8b-instant` | ⚡ Ultra-Fast / Free | Optional (Server Key pre-configured) |
+| **Google Gemini** | `gemini-flash-latest`, `gemini-1.5-pro` | 🟢 Free Tier Available | Yes (Google AI Studio) |
+| **OpenAI** | `gpt-4o-mini`, `gpt-4o` | 💳 Paid API | Yes (OpenAI Platform) |
+| **Ollama** | `llama3`, `mistral`, `phi3` | 💻 100% Local & Free | No (Localhost URL) |
+| **DuckDuckGo (Search)** | N/A | 🌐 Free Web Search | **No Key Needed** |
+| **Tavily (Search)** | N/A | 🔍 Free Tier Available | Yes (Tavily AI) |
+
+---
+
+## 🚀 Quickstart & Local Development
 
 ### 1. Prerequisites
-Ensure you have Python 3.10+ and Node.js v18+ installed on your computer.
+Ensure you have **Python 3.10+** and **Node.js 18+** installed on your system.
 
-### 2. Setup Dependencies
-Install the required Python libraries:
+### 2. Clone Repository & Setup Virtual Environment
 ```bash
-python -m pip install -r requirements.txt
+git clone https://github.com/AdeenaRamzan/Multi-agent-research-system.git
+cd Multi-agent-research-system
+
+# Create Python virtual environment
+python -m venv venv
+# On Windows:
+venv\Scripts\activate
+# On macOS/Linux:
+source venv/bin/activate
 ```
 
-### 3. Build the Frontend
-Vite compiles React into static assets served directly by FastAPI. Build them with:
+### 3. Install Python Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Build Frontend Static Assets
 ```bash
 cd frontend
 npm install
@@ -75,70 +98,44 @@ npm run build
 cd ..
 ```
 
-### 4. Run the Application
-Start the FastAPI server:
+### 5. Configure Environment Variables (Optional)
+Create a `.env` file in the root directory:
+```env
+GROQ_API_KEY=gsk_your_groq_api_key_here
+```
+
+### 6. Run the Application
+Start the unified FastAPI application server:
 ```bash
 python app.py
 ```
-Open your browser and navigate to **[http://localhost:8000](http://localhost:8000)** to start researching!
+Open your browser and navigate to **`http://localhost:8001`** (or `http://localhost:8000`).
 
 ---
 
-## 🛠️ Local Development (Hot-Reloading)
+## ☁️ Deployment
 
-If you are modifying the codebase, run the backend and frontend separately to enjoy instant page refresh (hot-reloading):
+### Vercel (Recommended & 24/7 Free)
+ResearchMind is pre-configured for 1-click deployment on Vercel (`vercel.json` included):
 
-1.  **Start FastAPI Backend:**
-    ```bash
-    python app.py
-    ```
-    *(Runs on `http://localhost:8000`)*
-2.  **Start Vite React Dev Server:**
-    ```bash
-    cd frontend
-    npm run dev
-    ```
-    *(Runs on `http://localhost:5173`. Any API request will automatically proxy to the backend on port 8000).*
+1. Fork or push this repository to your GitHub account.
+2. Go to [vercel.com/new](https://vercel.com/new) and import your repository.
+3. Add the Environment Variable under settings:
+   * **Key:** `GROQ_API_KEY`
+   * **Value:** `gsk_your_groq_api_key`
+4. Click **Deploy**. Vercel will serve the application instantly!
 
 ---
 
-## ☁️ How to Deploy
+## 🔒 Security & Privacy
 
-Because the compiled React frontend is served as static files directly from the Python backend, deployment is simple and can be hosted on a single container or service.
+* **Zero Hardcoded Secrets:** No private keys are committed in tracked repository code (`.env` listed in `.gitignore`).
+* **Local Storage Protection:** Client-entered API keys are stored exclusively in the browser's `localStorage` and transmitted via encrypted POST payload for the duration of the pipeline execution.
 
-### Option A: PaaS (Render, Railway, Heroku)
-You can deploy directly from your GitHub repository using the following settings:
-*   **Build Command:** `pip install -r requirements.txt && cd frontend && npm install && npm run build`
-*   **Start Command:** `python app.py` (FastAPI automatically respects the `$PORT` environment variable set by the hosting provider).
+---
 
-### Option B: Docker Container
-To deploy as a containerized app on AWS, GCP, Azure, or Fly.io, you can create a simple `Dockerfile` in the root:
+## 📄 License
 
-```dockerfile
-# 1. Build frontend React static assets
-FROM node:22-alpine AS frontend-builder
-WORKDIR /app/frontend
-COPY frontend/package*.json ./
-RUN npm install
-COPY frontend/ ./
-RUN npm run build
+Distributed under the **MIT License**. See `LICENSE` for more information.
 
-# 2. Package FastAPI application
-FROM python:3.11-slim
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-COPY . .
-# Copy compiled frontend from step 1
-COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist
-
-EXPOSE 8000
-ENV PORT=8000
-CMD ["python", "app.py"]
-```
-
-Build and run your docker container:
-```bash
-docker build -t researchmind .
-docker run -p 8000:8000 -e PORT=8000 researchmind
-```
+Developed with ❤️ by **Adeena Ramzan** as an open-source Multi-Agent AI System.
