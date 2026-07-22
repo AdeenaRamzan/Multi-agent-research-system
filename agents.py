@@ -137,7 +137,7 @@ def build_search_agent(llm, search_tool):
     return create_agent(
         model=llm,
         tools=[search_tool],
-        system_prompt="You are a web search specialist. You must use the 'web_search' tool to gather initial, reliable, and recent information about the user's research topic. Once you retrieve search results, list the relevant titles, snippets, and URLs back to the user."
+        system_prompt="You are a senior web intelligence analyst. You MUST use the 'web_search' tool to execute thorough, deep web searches. Gather extensive factual data, primary source URLs, technical milestones, market figures, and recent 2026 developments about the user's research topic. Return comprehensive titles, URLs, and detailed snippets."
     )
 
 def build_reader_agent(llm, scrape_tool):
