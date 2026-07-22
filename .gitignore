@@ -17,8 +17,7 @@ ENV/
 # Node & Frontend
 frontend/node_modules/
 node_modules/
-frontend/dist/
-dist/
+!frontend/dist/
 .vite/
 
 # System & IDE
