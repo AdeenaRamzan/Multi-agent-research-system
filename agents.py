@@ -5,21 +5,34 @@ import os
 
 # Define prompts for the chains
 writer_prompt = ChatPromptTemplate.from_messages([
-    ("system", "You are an expert research writer. Write clear, structured and insightful reports."),
-    ("human", """Write a detailed research report on the topic below.
+    ("system", "You are a world-class senior research analyst and academic writer. Produce exhaustive, publication-grade, deeply analytical research reports."),
+    ("human", """Write a highly comprehensive, publication-grade research report on the topic below.
 
 Topic: {topic}
 
 Research Gathered:
 {research}
 
-Structure the report as:
-- Introduction
-- Key Findings (minimum 3 well-explained points)
-- Conclusion
-- Sources (list all URLs found in the research)
+Structure the report thoroughly with rich Markdown styling:
+# Executive Summary
+Provide a high-level overview of the topic and key takeaways.
 
-Be detailed, factual and professional."""),
+# Background & Technological Context
+Detail the domain background, market drivers, and technical fundamentals.
+
+# Key Findings & Deep-Dive Analysis
+Provide at least 4 detailed, well-substantiated key analytical points with technical depth and data points.
+
+# Future Outlook & Strategic Implications
+Analyze future developments, industry impact, and 2026+ projections.
+
+# Conclusion
+Synthesize the primary findings into a clear strategic conclusion.
+
+# References & Sources
+List all source URLs retrieved during research formatted cleanly.
+
+Ensure the report is rigorous, fact-based, insightful, and comprehensive."""),
 ])
 
 critic_prompt = ChatPromptTemplate.from_messages([
