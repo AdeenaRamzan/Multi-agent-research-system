@@ -18,7 +18,7 @@ def run_research_pipeline_stream(topic: str, config: dict):
         yield f"data: {json.dumps({'status': 'running', 'step': 'init', 'message': 'Initializing LLM and tools...'})}\n\n"
 
         # 1. Resolve LLM
-        llm_provider = config.get("llm_provider", "openai")
+        llm_provider = config.get("llm_provider", "gemini")
         llm_model = config.get("llm_model", "")
         
         # Determine API Key to use (frontend input fallback to server environment variables)
@@ -32,6 +32,10 @@ def run_research_pipeline_stream(topic: str, config: dict):
             api_key = config.get("gemini_api_key")
             if not api_key:
                 api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+        elif llm_provider == "groq":
+            api_key = config.get("groq_api_key")
+            if not api_key:
+                api_key = os.getenv("GROQ_API_KEY")
             
         ollama_url = config.get("ollama_base_url", "http://localhost:11434/v1")
         
@@ -67,11 +71,12 @@ def run_research_pipeline_stream(topic: str, config: dict):
         
         try:
             search_agent = build_search_agent(llm, search_tool)
+            search_result = None
             search_result = search_agent.invoke({
                 "messages": [("user", f"Find recent, reliable and detailed information about: {topic}")]
             })
+
             state["search_results"] = search_result["messages"][-1].content
-            
             yield f"data: {json.dumps({'status': 'running', 'step': 'search_done', 'content': state['search_results']})}\n\n"
         except Exception as e:
             yield f"data: {json.dumps({'status': 'error', 'message': f'Search Agent failed: {str(e)}'})}\n\n"
@@ -84,14 +89,23 @@ def run_research_pipeline_stream(topic: str, config: dict):
             reader_agent = build_reader_agent(llm, scrape_url)
             reader_input = (
                 f"Based on the following search results about '{topic}', "
-                f"pick the most relevant URL and scrape it for deeper content.\n\n"
+                f"pick the single most relevant URL and call 'scrape_url' on it.\n\n"
                 f"Search Results:\n{state['search_results'][:800]}"
             )
-            reader_result = reader_agent.invoke({
-                "messages": [("user", reader_input)]
-            })
-            state["scraped_content"] = reader_result["messages"][-1].content
-            
+            try:
+                reader_result = reader_agent.invoke({
+                    "messages": [("user", reader_input)]
+                })
+                state["scraped_content"] = reader_result["messages"][-1].content
+            except Exception:
+                # Direct URL regex fallback if Groq tool-calling parser glitches
+                import re
+                urls = re.findall(r'https?://[^\s<>"]+', state.get("search_results", ""))
+                if urls:
+                    state["scraped_content"] = scrape_url.invoke({"url": urls[0]})
+                else:
+                    state["scraped_content"] = "No external URL could be scraped."
+
             yield f"data: {json.dumps({'status': 'running', 'step': 'reader_done', 'content': state['scraped_content']})}\n\n"
         except Exception as e:
             yield f"data: {json.dumps({'status': 'error', 'message': f'Reader Agent failed: {str(e)}'})}\n\n"
@@ -106,11 +120,12 @@ def run_research_pipeline_stream(topic: str, config: dict):
                 f"SEARCH RESULTS:\n{state['search_results']}\n\n"
                 f"DETAILED SCRAPED CONTENT:\n{state['scraped_content']}"
             )
-            state["report"] = writer_chain.invoke({
+            report_content = writer_chain.invoke({
                 "topic": topic,
                 "research": research_combined
             })
-            
+
+            state["report"] = report_content
             yield f"data: {json.dumps({'status': 'running', 'step': 'writer_done', 'content': state['report']})}\n\n"
         except Exception as e:
             yield f"data: {json.dumps({'status': 'error', 'message': f'Writer Chain failed: {str(e)}'})}\n\n"
@@ -121,10 +136,11 @@ def run_research_pipeline_stream(topic: str, config: dict):
         
         try:
             critic_chain = get_critic_chain(llm)
-            state["feedback"] = critic_chain.invoke({
+            feedback_content = critic_chain.invoke({
                 "report": state["report"]
             })
-            
+
+            state["feedback"] = feedback_content
             yield f"data: {json.dumps({'status': 'running', 'step': 'critic_done', 'content': state['feedback']})}\n\n"
         except Exception as e:
             yield f"data: {json.dumps({'status': 'error', 'message': f'Critic Chain failed: {str(e)}'})}\n\n"
@@ -144,7 +160,7 @@ if __name__ == "__main__":
     load_dotenv()
     
     topic = input("\nEnter a research topic: ")
-    provider = input("Enter LLM provider (openai/gemini/ollama) [openai]: ").strip() or "openai"
+    provider = input("Enter LLM provider (openai/gemini/ollama) [gemini]: ").strip() or "gemini"
     model = input("Enter model name (or press enter for default): ").strip()
     
     conf = {

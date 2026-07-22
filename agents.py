@@ -59,13 +59,31 @@ def get_llm(provider: str, model_name: str, api_key: str = None, base_url: str =
         )
     elif provider == "gemini":
         from langchain_google_genai import ChatGoogleGenerativeAI
+        import time
+        
+        class RateLimitedGemini(ChatGoogleGenerativeAI):
+            def _generate(self, *args, **kwargs):
+                retries = 15
+                delay = 10
+                for attempt in range(retries):
+                    try:
+                        return super()._generate(*args, **kwargs)
+                    except Exception as e:
+                        if ("429" in str(e).upper() or "RESOURCE_EXHAUSTED" in str(e).upper()) and attempt < retries - 1:
+                            print(f"[Gemini Rate Limit] Waiting {delay}s (Attempt {attempt+1}/{retries})...")
+                            time.sleep(delay)
+                            delay += 5
+                        else:
+                            raise e
+        
         key = api_key or os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
         if not key:
             raise ValueError("Google Gemini API Key is required but was not provided.")
-        return ChatGoogleGenerativeAI(
-            model=model_name or "gemini-1.5-flash",
+        return RateLimitedGemini(
+            model=model_name or "gemini-flash-latest",
             temperature=0,
-            google_api_key=key
+            google_api_key=key,
+            max_retries=1
         )
     elif provider == "ollama":
         from langchain_openai import ChatOpenAI
@@ -74,6 +92,17 @@ def get_llm(provider: str, model_name: str, api_key: str = None, base_url: str =
             temperature=0,
             api_key="ollama",
             base_url=base_url or "http://localhost:11434/v1"
+        )
+    elif provider == "groq":
+        from langchain_openai import ChatOpenAI
+        key = api_key or os.getenv("GROQ_API_KEY")
+        if not key:
+            raise ValueError("Groq API Key is required but was not provided.")
+        return ChatOpenAI(
+            model=model_name or "llama-3.3-70b-versatile",
+            temperature=0,
+            api_key=key,
+            base_url="https://api.groq.com/openai/v1"
         )
     else:
         raise ValueError(f"Unsupported LLM provider: {provider}")
@@ -91,7 +120,7 @@ def build_reader_agent(llm, scrape_tool):
     return create_agent(
         model=llm,
         tools=[scrape_tool],
-        system_prompt="You are a web scraper. You must use the 'scrape_url' tool to read and extract the main body text/content from the most promising URL in the search results. Return the scraped text content."
+        system_prompt="You are a web scraper. You must call the 'scrape_url' tool using a single valid HTTP/HTTPS URL extracted from the search results. Do NOT perform web searches or use any other functions."
     )
 
 def get_writer_chain(llm):

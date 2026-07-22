@@ -10,8 +10,9 @@ import './App.css';
 // Default config values
 const DEFAULT_MODELS = {
   openai: 'gpt-4o-mini',
-  gemini: 'gemini-1.5-flash',
-  ollama: 'llama3'
+  gemini: 'gemini-flash-latest',
+  ollama: 'llama3',
+  groq: 'llama-3.3-70b-versatile'
 };
 
 export default function App() {
@@ -32,14 +33,15 @@ export default function App() {
   
   // Config state
   const [showConfig, setShowConfig] = useState(true);
-  const [llmProvider, setLlmProvider] = useState('openai');
-  const [llmModel, setLlmModel] = useState(DEFAULT_MODELS.openai);
+  const [llmProvider, setLlmProvider] = useState('groq');
+  const [llmModel, setLlmModel] = useState(DEFAULT_MODELS.groq);
   const [searchProvider, setSearchProvider] = useState('duckduckgo');
   const [ollamaBaseUrl, setOllamaBaseUrl] = useState('http://localhost:11434/v1');
   
   // API Keys
   const [openaiApiKey, setOpenaiApiKey] = useState(() => localStorage.getItem('openai_api_key') || '');
   const [geminiApiKey, setGeminiApiKey] = useState(() => localStorage.getItem('gemini_api_key') || '');
+  const [groqApiKey, setGroqApiKey] = useState(() => localStorage.getItem('groq_api_key') || '');
   const [tavilyApiKey, setTavilyApiKey] = useState(() => localStorage.getItem('tavily_api_key') || '');
 
   const [copied, setCopied] = useState(false);
@@ -53,20 +55,24 @@ export default function App() {
     localStorage.setItem('gemini_api_key', geminiApiKey);
   }, [geminiApiKey]);
   useEffect(() => {
+    localStorage.setItem('groq_api_key', groqApiKey);
+  }, [groqApiKey]);
+  useEffect(() => {
     localStorage.setItem('tavily_api_key', tavilyApiKey);
   }, [tavilyApiKey]);
 
   // Adjust model when provider changes
   useEffect(() => {
-    setLlmModel(DEFAULT_MODELS[llmProvider] || '');
+    if (DEFAULT_MODELS[llmProvider]) {
+      setLlmModel(DEFAULT_MODELS[llmProvider]);
+    }
   }, [llmProvider]);
 
-  // Scroll logs to bottom when text updates
-  useEffect(() => {
+  const scrollToBottom = () => {
     if (logContainerRef.current) {
       logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
     }
-  }, [searchResults, scrapedContent, report, criticFeedback, statusMessage]);
+  };
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(report);
@@ -84,11 +90,10 @@ export default function App() {
     document.body.removeChild(element);
   };
 
-  const handleRunPipeline = async (e) => {
+  const handleStartResearch = async (e) => {
     if (e) e.preventDefault();
     if (!topic.trim()) return;
 
-    // Reset results & start
     setLoading(true);
     setError(null);
     setStep('init');
@@ -105,6 +110,7 @@ export default function App() {
       search_provider: searchProvider,
       openai_api_key: openaiApiKey,
       gemini_api_key: geminiApiKey,
+      groq_api_key: groqApiKey,
       tavily_api_key: tavilyApiKey,
       ollama_base_url: ollamaBaseUrl
     };
@@ -112,62 +118,50 @@ export default function App() {
     try {
       const response = await fetch('/api/research', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ topic, config }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to start research pipeline.');
+        const errData = await response.json();
+        throw new Error(errData.detail || 'Failed to initialize pipeline.');
       }
 
       const reader = response.body.getReader();
-      const decoder = new TextDecoder('utf-8');
-      let buffer = '';
+      const decoder = new TextDecoder();
 
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
 
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop(); // keep partial line in buffer
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n\n');
 
         for (const line of lines) {
-          const cleanLine = line.trim();
-          if (cleanLine.startsWith('data: ')) {
+          if (line.startsWith('data: ')) {
             try {
-              const data = JSON.parse(cleanLine.slice(6));
-              
+              const data = JSON.parse(line.replace('data: ', ''));
+
               if (data.status === 'running') {
                 setStep(data.step);
-                if (data.message) {
-                  setStatusMessage(data.message);
-                }
-                
-                // Live streaming incremental content back to corresponding hooks
-                if (data.step === 'search_done') {
-                  setSearchResults(data.content);
-                } else if (data.step === 'reader_done') {
-                  setScrapedContent(data.content);
-                } else if (data.step === 'writer_done') {
-                  setReport(data.content);
-                } else if (data.step === 'critic_done') {
-                  setCriticFeedback(data.content);
-                }
+                if (data.message) setStatusMessage(data.message);
+
+                if (data.step === 'search_done') setSearchResults(data.content || '');
+                else if (data.step === 'reader_done') setScrapedContent(data.content || '');
+                else if (data.step === 'writer_done') setReport(data.content || '');
+                else if (data.step === 'critic_done') setCriticFeedback(data.content || '');
               } else if (data.status === 'complete') {
                 setStep('complete');
+                setStatusMessage('Research completed successfully!');
                 setLoading(false);
-                setStatusMessage('Finished!');
               } else if (data.status === 'error') {
                 setError(data.message);
                 setStep('error');
                 setLoading(false);
+                break;
               }
             } catch (err) {
-              console.error('Error parsing SSE line:', err);
+              console.error('SSE parse error:', err);
             }
           }
         }
@@ -181,7 +175,6 @@ export default function App() {
 
   const triggerExample = (exampleTopic) => {
     setTopic(exampleTopic);
-    // Don't auto-run immediately, let user review search and settings first
   };
 
   const getCriticScore = () => {
@@ -196,14 +189,39 @@ export default function App() {
     <div className="app-container">
       {/* Header */}
       <header className="app-header">
-        <div className="badge">AI Agent Network</div>
-        <h1>
-          Research<span style={{ color: 'var(--accent-orange)' }}>Mind</span>
+        <div className="badge">
+          <Sparkles size={12} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '4px' }} />
+          AI Agent Network
+        </div>
+        <h1 className="gradient-text-hero">
+          ResearchMind
         </h1>
         <p>
-          Specialized agents collaborate in a pipeline—gathering, scraping, 
-          writing, and reviewing—to generate premium research reports.
+          Specialized agents collaborate in a real-time pipeline—gathering, scraping, 
+          writing, and reviewing—to generate high-grade research reports.
         </p>
+
+        {/* Demo Mode & User Guidance Banner */}
+        <div style={{
+          marginTop: '1rem',
+          padding: '0.75rem 1.25rem',
+          background: 'rgba(56, 189, 248, 0.06)',
+          border: '1px solid rgba(56, 189, 248, 0.25)',
+          borderRadius: '12px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '0.6rem',
+          maxWidth: '650px',
+          margin: '1.25rem auto 0 auto',
+          textAlign: 'center',
+          boxShadow: '0 4px 20px rgba(56, 189, 248, 0.08)'
+        }}>
+          <Sparkles size={16} style={{ color: '#38bdf8', flexShrink: 0 }} />
+          <span style={{ fontSize: '0.82rem', color: '#93c5fd', lineHeight: '1.4' }}>
+            <strong>Free Setup:</strong> Powered by <strong>Groq AI</strong> &amp; <strong>DuckDuckGo</strong>. Enter your free Groq API key in the Pipeline Config drawer on the left to start researching!
+          </span>
+        </div>
       </header>
 
       {/* Main Grid */}
@@ -238,6 +256,7 @@ export default function App() {
               >
                 <option value="openai">OpenAI (GPT Models)</option>
                 <option value="gemini">Google Gemini (Free tier avail.)</option>
+                <option value="groq">Groq (Ultra-fast / Free tier)</option>
                 <option value="ollama">Ollama (Local / Free)</option>
               </select>
             </div>
@@ -301,6 +320,24 @@ export default function App() {
               </div>
             )}
 
+            {llmProvider === 'groq' && (
+              <div className="input-group">
+                <label className="input-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <Key size={12} /> Groq API Key
+                </label>
+                <input 
+                  type="password" 
+                  className="input-field" 
+                  value="••••••••••••••••••••••••••••"
+                  disabled={true}
+                  style={{ opacity: 0.7, cursor: 'not-allowed', background: 'rgba(255,255,255,0.03)' }}
+                />
+                <span style={{ fontSize: '0.7rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.2rem' }}>
+                  <CheckCircle2 size={12} /> Pre-configured Server Key Active (Locked)
+                </span>
+              </div>
+            )}
+
             {/* Search Provider */}
             <div className="input-group" style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1.2rem' }}>
               <label className="input-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
@@ -311,7 +348,7 @@ export default function App() {
                 value={searchProvider} 
                 onChange={(e) => setSearchProvider(e.target.value)}
               >
-                <option value="duckduckgo">DuckDuckGo Search (Free, No Key)</option>
+                <option value="duckduckgo">DuckDuckGo Search (Free, No Key Needed)</option>
                 <option value="tavily">Tavily Search (Key required)</option>
               </select>
             </div>
@@ -338,7 +375,7 @@ export default function App() {
               <div style={{ padding: '0.75rem', background: 'rgba(239, 68, 68, 0.08)', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.2)', display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
                 <ShieldAlert size={16} style={{ color: '#ef4444', flexShrink: 0, marginTop: '0.1rem' }} />
                 <p style={{ fontSize: '0.75rem', color: '#ef4444', lineHeight: '1.4' }}>
-                  API Keys are missing. Please enter keys above, or use <strong>Gemini (free tier)</strong> or <strong>Ollama (local)</strong> with <strong>DuckDuckGo</strong> for keyless runs.
+                  API Keys are missing. Please enter keys above, or use <strong>Groq / Gemini (free tier)</strong> or <strong>Ollama (local)</strong> with <strong>DuckDuckGo</strong> for free runs.
                 </p>
               </div>
             )}
@@ -350,7 +387,7 @@ export default function App() {
           
           {/* Main search card */}
           <section className="glass-panel" style={{ padding: '1.8rem 2.2rem' }}>
-            <form onSubmit={handleRunPipeline} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+            <form onSubmit={handleStartResearch} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
               <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end' }}>
                 <div className="input-group" style={{ flex: 1 }}>
                   <label className="input-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>

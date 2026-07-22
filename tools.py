@@ -29,7 +29,11 @@ def get_ddg_search_tool():
     def web_search(query: str) -> str:
         """Search the web for recent and reliable information on a topic. Returns Titles, URLs, and snippets."""
         try:
-            from duckduckgo_search import DDGS
+            try:
+                from ddgs import DDGS
+            except ImportError:
+                from duckduckgo_search import DDGS
+
             with DDGS() as ddgs:
                 results = list(ddgs.text(query, max_results=5))
             

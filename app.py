@@ -1,4 +1,7 @@
 import os
+from dotenv import load_dotenv
+load_dotenv()
+
 import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse, FileResponse
@@ -94,8 +97,8 @@ async def serve_spa(rest_of_path: str):
     }
 
 if __name__ == "__main__":
-    # Get port from environment or default to 8000
-    port = int(os.getenv("PORT", 8000))
+    # Get port from environment or default to 8001
+    port = int(os.getenv("PORT", 8001))
     print(f"\nStarting ResearchMind Server on http://localhost:{port} ...")
     print(f"Open your browser and navigate to http://localhost:{port} to start researching.\n")
     uvicorn.run("app:app", host="0.0.0.0", port=port, reload=True)

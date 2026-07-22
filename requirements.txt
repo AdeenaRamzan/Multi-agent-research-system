@@ -48,5 +48,6 @@ uvicorn>=0.22.0
 sse-starlette>=1.6.0
 
 # Free provider alternatives
+ddgs>=9.0.0
 duckduckgo-search>=5.0.0
 langchain-google-genai>=1.0.0
