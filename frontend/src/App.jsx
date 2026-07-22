@@ -580,12 +580,6 @@ export default function App() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1.2rem', marginBottom: '1.5rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                   <h2 style={{ fontSize: '1.5rem', color: '#fff' }}>Research Report</h2>
-                  
-                  {score && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(16, 185, 129, 0.1)', color: 'var(--accent-green)', padding: '0.3rem 0.75rem', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.2)', fontSize: '0.9rem', fontWeight: 600 }}>
-                      <span>Score: {score} / 10</span>
-                    </div>
-                  )}
                 </div>
 
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
