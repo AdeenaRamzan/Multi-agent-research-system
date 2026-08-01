@@ -52,8 +52,8 @@ async def run_research(request: ResearchRequest):
 # --- Serve Frontend Build Files ---
 root_path = os.path.dirname(__file__)
 dist_paths_to_check = [
-    os.path.join(root_path, "dist"),
-    os.path.join(root_path, "frontend", "dist")
+    os.path.join(root_path, "frontend", "dist"),
+    os.path.join(root_path, "dist")
 ]
 
 frontend_dist_path = dist_paths_to_check[0]
