@@ -8,7 +8,7 @@
 [![Groq](https://img.shields.io/badge/LLM-Groq%20Llama%203.3-f97316?style=for-the-badge&logo=openai&logoColor=white)](https://groq.com/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
-**ResearchMind** is a state-of-the-art multi-agent AI research network designed to automate deep academic, market, and technical research. Operating as a sequential agentic pipeline powered by LangChain, FastAPI, and React, ResearchMind deploys specialized AI agents to gather web intelligence, scrape full-body articles, synthesize comprehensive reports, and perform objective peer-review evaluations.
+**ResearchMind** is a state-of-the-art autonomous multi-agent AI research suite designed to automate deep academic, market, and technical research. Operating as a 4-stage sequential agentic pipeline powered by LangChain, FastAPI, and React, ResearchMind deploys specialized AI agents to gather web intelligence, scrape full-body articles, synthesize comprehensive reports, and perform objective peer-review evaluations.
 
 🌐 **Live Public Demo:** [https://multi-agent-research-system-khaki.vercel.app](https://multi-agent-research-system-khaki.vercel.app)
 
@@ -16,14 +16,16 @@
 
 ## 🌟 Key Features
 
-* **🤖 Autonomous Multi-Agent Network:** Deploys a team of 4 specialized LangChain agents operating in tandem (Search Agent, Reader Agent, Writer Chain, and Critic Reviewer).
-* **⚡ Ultra-Fast Groq & Llama 3.3 Integration:** Leverages Groq's LPU acceleration with `llama-3.3-70b-versatile` for blazing fast, high-reasoning intelligence synthesis.
+* **🤖 Autonomous Multi-Agent Network:** Deploys 4 specialized LangChain agents operating in tandem (Search Agent, Reader Agent, Writer Chain, and Critic Reviewer).
+* **📊 Executive Dashboard & Observability:** Real-time analytics tracking total research runs, critic score distribution (`9.6/10 avg`), verified web sources, and per-agent execution latency meters.
+* **💬 AI Chat Assistant (Contextual Q&A):** Interactive assistant allowing follow-up conversations, risk analysis, and citation extraction directly on generated research papers.
+* **📁 Document Library & Project Collections:** Searchable document repository stored locally with 1-click Markdown copying, `.md` file export, and topic folder organization.
+* **⚡ Ultra-Fast Groq & Llama 3.3 Integration:** Leverages Groq's LPU acceleration with `llama-3.3-70b-versatile` and automatic failover to `llama-3.1-8b-instant` on 429 rate limit events.
 * **🔍 Keyless Free Web Search:** Integrates **DuckDuckGo Search** (`ddgs`) alongside Tavily, enabling keyless research execution out-of-the-box.
 * **🎨 Next-Gen Obsidian Glassmorphic UI:** Built with React 19, featuring ambient neon mesh glow halos, real-time node state indicators, and responsive tab views.
 * **📡 Real-Time SSE Event Streaming:** Streams step-by-step progress, raw web sources, scraped contents, and intermediate logs live over Server-Sent Events (SSE).
-* **⭐ Objective Critic Scorecard:** Every report undergoes peer-review evaluation by the Critic Chain, yielding an overall score (e.g. `9.2/10`), strengths breakdown, and areas for improvement.
-* **🔒 Enterprise Security & Dual-Key System:** Zero hardcoded API keys in tracked code. Supports pre-configured server environment variables (`GROQ_API_KEY`) with client-side local storage fallback.
-* **📥 One-Click Export:** Instantly copy formatted markdown or download `.md` research report files.
+* **⭐ Objective Critic Scorecard:** Every report undergoes peer-review evaluation by the Critic Chain, yielding an overall score (e.g. `9.6/10`), strengths breakdown, and strategic recommendations.
+* **🔒 Enterprise Security & Dual-Key System:** Zero hardcoded API keys in tracked code. Supports pre-configured server environment variables (`GROQ_API_KEY`) with client-side local storage vault fallback.
 
 ---
 
@@ -43,13 +45,13 @@ graph TD
         CriticChain -->|Calculates Scorecard & Feedback| Complete[🏁 Complete Pipeline State]
     end
 
-    Complete --> UI["🖥️ Glassmorphic Report Viewer (Interactive Tabs & Export)"]
+    Complete --> Workspace["💼 Full Workspace Suite (Dashboard, Library, AI Chat & Analytics)"]
 
     style SearchAgent fill:#0284c7,stroke:#38bdf8,stroke-width:2px,color:#fff
     style ReaderAgent fill:#7c3aed,stroke:#a855f7,stroke-width:2px,color:#fff
     style WriterChain fill:#c2410c,stroke:#f97316,stroke-width:2px,color:#fff
     style CriticChain fill:#047857,stroke:#10b981,stroke-width:2px,color:#fff
-    style UI fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#fff
+    style Workspace fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#fff
 ```
 
 ---
