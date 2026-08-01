@@ -5,34 +5,29 @@ import os
 
 # Define prompts for the chains
 writer_prompt = ChatPromptTemplate.from_messages([
-    ("system", "You are a world-class senior research analyst and academic writer. Produce exhaustive, publication-grade, deeply analytical research reports."),
-    ("human", """Write a highly comprehensive, publication-grade research report on the topic below.
+    ("system", "You are a senior research analyst. Produce high-impact, publication-grade, concise research papers with clear markdown formatting."),
+    ("human", """Write a sharp, high-grade research report on the topic below.
 
 Topic: {topic}
 
 Research Gathered:
 {research}
 
-Structure the report thoroughly with rich Markdown styling:
+Structure with Markdown:
 # Executive Summary
-Provide a high-level overview of the topic and key takeaways.
+Key overview and high-level strategic takeaways.
 
-# Background & Technological Context
-Detail the domain background, market drivers, and technical fundamentals.
-
-# Key Findings & Deep-Dive Analysis
-Provide at least 4 detailed, well-substantiated key analytical points with technical depth and data points.
+# Technical Context & Key Findings
+- **Core Technology & Drivers:** Key technical mechanisms and market trends.
+- **Analytical Breakthroughs:** Major findings, empirical milestones, and quantitative data.
 
 # Future Outlook & Strategic Implications
-Analyze future developments, industry impact, and 2026+ projections.
+Market projections, upcoming 2026+ developments, and industry impact.
 
-# Conclusion
-Synthesize the primary findings into a clear strategic conclusion.
+# Conclusion & Primary References
+Synthesize findings into a strategic conclusion, followed by source URLs.
 
-# References & Sources
-List all source URLs retrieved during research formatted cleanly.
-
-Ensure the report is rigorous, fact-based, insightful, and comprehensive."""),
+Keep the report dense, precise, and publication-ready."""),
 ])
 
 critic_prompt = ChatPromptTemplate.from_messages([
