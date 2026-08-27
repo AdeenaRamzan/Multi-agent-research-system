@@ -15,7 +15,7 @@ const DEFAULT_MODELS = {
   openai: 'gpt-4o-mini',
   gemini: 'gemini-flash-latest',
   ollama: 'llama3',
-  groq: 'llama-3.3-70b-versatile'
+  groq: 'llama3-8b-8192'
 };
 
 const NAV_ITEMS = [
@@ -1191,7 +1191,7 @@ function SettingsPanel({
             className="input-field"
             value={llmModel}
             onChange={(e) => setLlmModel(e.target.value)}
-            placeholder="e.g. llama-3.3-70b-versatile"
+            placeholder="e.g. llama3-8b-8192"
           />
         </div>
 
