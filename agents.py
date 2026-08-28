@@ -106,10 +106,10 @@ def get_llm(provider: str, model_name: str, api_key: str = None, base_url: str =
         if not key:
             raise ValueError("Groq API Key is required but was not provided.")
             
-        target_model = model_name or "llama-3.1-8b-instant"
-        # Sanitize deprecated or decommissioned models to active 8b-instant
-        if any(bad in target_model for bad in ["70b-versatile", "8b-8192", "70b-8192", "llama-3.3"]):
-            target_model = "llama-3.1-8b-instant"
+        target_model = model_name or "openai/gpt-oss-120b"
+        # Sanitize deprecated or decommissioned Llama models to active Groq model
+        if any(bad in target_model.lower() for bad in ["llama", "70b", "8b", "versatile", "instant"]):
+            target_model = "openai/gpt-oss-120b"
 
         return ChatOpenAI(
             model=target_model,
