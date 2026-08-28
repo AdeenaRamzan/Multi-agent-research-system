@@ -107,23 +107,29 @@ def get_llm(provider: str, model_name: str, api_key: str = None, base_url: str =
             raise ValueError("Groq API Key is required but was not provided.")
             
         class RateLimitedGroq(ChatOpenAI):
+            # Fallback chain: try primary → llama-3.1-8b-instant → qwen/qwen3.6-27b
+            FALLBACK_MODELS = ["llama-3.1-8b-instant", "qwen/qwen3.6-27b"]
+            
             def _generate(self, *args, **kwargs):
                 try:
                     return super()._generate(*args, **kwargs)
                 except Exception as e:
                     err_msg = str(e).lower()
-                    if "429" in err_msg or "rate_limit_exceeded" in err_msg or "tokens per day" in err_msg:
-                        print(f"[Groq Fallback] Rate Limit reached. Switching to llama3-8b-8192...")
-                        self.model_name = "llama3-8b-8192"
-                        return super()._generate(*args, **kwargs)
-                    if "404" in err_msg or "model_not_found" in err_msg or "does not exist" in err_msg:
-                        print(f"[Groq Fallback] Model not found. Switching to llama3-8b-8192...")
-                        self.model_name = "llama3-8b-8192"
-                        return super()._generate(*args, **kwargs)
+                    is_rate_limit = "429" in err_msg or "rate_limit_exceeded" in err_msg or "tokens per day" in err_msg
+                    is_model_gone = "404" in err_msg or "model_not_found" in err_msg or "does not exist" in err_msg or "model_decommissioned" in err_msg or "decommissioned" in err_msg
+                    if is_rate_limit or is_model_gone:
+                        reason = "Rate limit" if is_rate_limit else "Model unavailable"
+                        for fb_model in self.FALLBACK_MODELS:
+                            try:
+                                print(f"[Groq Fallback] {reason}. Trying {fb_model}...")
+                                self.model_name = fb_model
+                                return super()._generate(*args, **kwargs)
+                            except Exception:
+                                continue
                     raise e
 
         return RateLimitedGroq(
-            model=model_name or "llama-3.1-70b-versatile",
+            model=model_name or "llama-3.3-70b-versatile",
             temperature=0,
             api_key=key,
             base_url="https://api.groq.com/openai/v1"
