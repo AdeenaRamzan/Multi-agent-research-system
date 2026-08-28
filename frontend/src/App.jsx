@@ -238,61 +238,76 @@ export default function App() {
       let fullReport = '';
       let fullCritic = '';
       let sourcesCount = 4;
+      let buffer = '';
 
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
 
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n\n');
+        buffer += decoder.decode(value, { stream: true });
+        const events = buffer.split('\n\n');
+        buffer = events.pop() || '';
 
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            try {
-              const data = JSON.parse(line.replace('data: ', ''));
+        for (const event of events) {
+          const trimmed = event.trim();
+          if (!trimmed) continue;
 
-              if (data.status === 'running') {
-                setStep(data.step);
-                if (data.message) setStatusMessage(data.message);
+          for (const line of trimmed.split('\n')) {
+            if (line.startsWith('data: ')) {
+              try {
+                const data = JSON.parse(line.slice(6));
 
-                if (data.step === 'search_done') {
-                  setSearchResults(data.content || '');
-                  const matches = (data.content || '').match(/https?:\/\/[^\s)"'\]]+/g);
-                  if (matches) sourcesCount = new Set(matches).size;
+                if (data.status === 'running') {
+                  setStep(data.step);
+                  if (data.message) setStatusMessage(data.message);
+
+                  if (data.step === 'search_done') {
+                    setSearchResults(data.content || '');
+                    const matches = (data.content || '').match(/https?:\/\/[^\s)"'\]]+/g);
+                    if (matches) sourcesCount = new Set(matches).size;
+                  }
+                  else if (data.step === 'reader_done') setScrapedContent(data.content || '');
+                  else if (data.step === 'writer_done') {
+                    setReport(data.content || '');
+                    fullReport = data.content || '';
+                  }
+                  else if (data.step === 'critic_done') {
+                    setCriticFeedback(data.content || '');
+                    fullCritic = data.content || '';
+                  }
+                } else if (data.status === 'complete') {
+                  if (data.report && !fullReport) {
+                    setReport(data.report);
+                    fullReport = data.report;
+                  }
+                  if (data.feedback && !fullCritic) {
+                    setCriticFeedback(data.feedback);
+                    fullCritic = data.feedback;
+                  }
+                  setStep('complete');
+                  setStatusMessage('Research completed successfully!');
+                  setLoading(false);
+
+                  // Save to persistent history
+                  const scoreVal = getCriticScore(fullCritic) || '9.5';
+                  const newDoc = {
+                    id: `doc-${Date.now()}`,
+                    topic,
+                    date: new Date().toISOString().split('T')[0],
+                    score: scoreVal,
+                    sourcesCount,
+                    report: fullReport || data.report || ''
+                  };
+                  setHistory(prev => [newDoc, ...prev]);
+                } else if (data.status === 'error') {
+                  setError(data.message);
+                  setStep('error');
+                  setLoading(false);
+                  break;
                 }
-                else if (data.step === 'reader_done') setScrapedContent(data.content || '');
-                else if (data.step === 'writer_done') {
-                  setReport(data.content || '');
-                  fullReport = data.content || '';
-                }
-                else if (data.step === 'critic_done') {
-                  setCriticFeedback(data.content || '');
-                  fullCritic = data.content || '';
-                }
-              } else if (data.status === 'complete') {
-                setStep('complete');
-                setStatusMessage('Research completed successfully!');
-                setLoading(false);
-
-                // Save to persistent history
-                const scoreVal = getCriticScore(fullCritic) || '9.5';
-                const newDoc = {
-                  id: `doc-${Date.now()}`,
-                  topic,
-                  date: new Date().toISOString().split('T')[0],
-                  score: scoreVal,
-                  sourcesCount,
-                  report: fullReport
-                };
-                setHistory(prev => [newDoc, ...prev]);
-              } else if (data.status === 'error') {
-                setError(data.message);
-                setStep('error');
-                setLoading(false);
-                break;
+              } catch (err) {
+                console.error('SSE parse error:', err);
               }
-            } catch (err) {
-              console.error('SSE parse error:', err);
             }
           }
         }

@@ -122,6 +122,7 @@ def get_llm(provider: str, model_name: str, api_key: str = None, base_url: str =
                             try:
                                 print(f"[Groq Fallback] {reason}. Trying {fb_model}...")
                                 self.model_name = fb_model
+                                self.model = fb_model
                                 return super()._generate(*args, **kwargs)
                             except Exception:
                                 continue

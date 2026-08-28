@@ -144,7 +144,7 @@ def run_research_pipeline_stream(topic: str, config: dict):
             return
 
         # Final response
-        yield f"data: {json.dumps({'status': 'complete', 'message': 'Research pipeline completed successfully!'})}\n\n"
+        yield f"data: {json.dumps({'status': 'complete', 'report': state.get('report', ''), 'feedback': state.get('feedback', ''), 'message': 'Research pipeline completed successfully!'})}\n\n"
 
     except Exception as e:
         error_msg = f"Unexpected error in pipeline: {str(e)}\n{traceback.format_exc()}"
