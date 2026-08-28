@@ -106,30 +106,13 @@ def get_llm(provider: str, model_name: str, api_key: str = None, base_url: str =
         if not key:
             raise ValueError("Groq API Key is required but was not provided.")
             
-        _groq_fallbacks = ["llama-3.1-8b-instant", "qwen/qwen3.6-27b"]
-        
-        class RateLimitedGroq(ChatOpenAI):
-            def _generate(self, *args, **kwargs):
-                try:
-                    return super()._generate(*args, **kwargs)
-                except Exception as e:
-                    err_msg = str(e).lower()
-                    is_rate_limit = "429" in err_msg or "rate_limit_exceeded" in err_msg or "tokens per day" in err_msg
-                    is_model_gone = "404" in err_msg or "model_not_found" in err_msg or "does not exist" in err_msg or "model_decommissioned" in err_msg or "decommissioned" in err_msg
-                    if is_rate_limit or is_model_gone:
-                        reason = "Rate limit" if is_rate_limit else "Model unavailable"
-                        for fb_model in _groq_fallbacks:
-                            try:
-                                print(f"[Groq Fallback] {reason}. Trying {fb_model}...")
-                                self.model_name = fb_model
-                                self.model = fb_model
-                                return super()._generate(*args, **kwargs)
-                            except Exception:
-                                continue
-                    raise e
+        target_model = model_name or "llama-3.1-8b-instant"
+        # Sanitize deprecated or decommissioned models to active 8b-instant
+        if any(bad in target_model for bad in ["70b-versatile", "8b-8192", "70b-8192", "llama-3.3"]):
+            target_model = "llama-3.1-8b-instant"
 
-        return RateLimitedGroq(
-            model=model_name or "llama-3.3-70b-versatile",
+        return ChatOpenAI(
+            model=target_model,
             temperature=0,
             api_key=key,
             base_url="https://api.groq.com/openai/v1"
