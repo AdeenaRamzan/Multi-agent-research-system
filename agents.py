@@ -106,10 +106,9 @@ def get_llm(provider: str, model_name: str, api_key: str = None, base_url: str =
         if not key:
             raise ValueError("Groq API Key is required but was not provided.")
             
+        _groq_fallbacks = ["llama-3.1-8b-instant", "qwen/qwen3.6-27b"]
+        
         class RateLimitedGroq(ChatOpenAI):
-            # Fallback chain: try primary → llama-3.1-8b-instant → qwen/qwen3.6-27b
-            FALLBACK_MODELS = ["llama-3.1-8b-instant", "qwen/qwen3.6-27b"]
-            
             def _generate(self, *args, **kwargs):
                 try:
                     return super()._generate(*args, **kwargs)
@@ -119,7 +118,7 @@ def get_llm(provider: str, model_name: str, api_key: str = None, base_url: str =
                     is_model_gone = "404" in err_msg or "model_not_found" in err_msg or "does not exist" in err_msg or "model_decommissioned" in err_msg or "decommissioned" in err_msg
                     if is_rate_limit or is_model_gone:
                         reason = "Rate limit" if is_rate_limit else "Model unavailable"
-                        for fb_model in self.FALLBACK_MODELS:
+                        for fb_model in _groq_fallbacks:
                             try:
                                 print(f"[Groq Fallback] {reason}. Trying {fb_model}...")
                                 self.model_name = fb_model
